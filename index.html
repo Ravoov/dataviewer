@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ContactOS — Data Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#080c14;
+  --surface:#0d1220;
+  --surface2:#131a2e;
+  --border:#1e2d4a;
+  --border2:#243455;
+  --accent:#00e5ff;
+  --accent2:#ff6b35;
+  --accent3:#a8ff3e;
+  --text:#c8d8f0;
+  --text2:#7890b8;
+  --danger:#ff3e6b;
+  --success:#3effb0;
+  --row-hover:#111d35;
+}
+
+body{
+  font-family:'Fira Code',monospace;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* SCANLINE EFFECT */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,229,255,0.015) 2px,
+    rgba(0,229,255,0.015) 4px
+  );
+  pointer-events:none;z-index:9999;
+}
+
+/* HEADER */
+header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 32px;
+  height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.logo{
+  font-family:'Archivo Black',sans-serif;
+  font-size:18px;letter-spacing:3px;
+  color:var(--accent);
+  text-shadow:0 0 20px rgba(0,229,255,0.5);
+  display:flex;align-items:center;gap:10px;
+}
+.logo-slash{color:var(--accent2);}
+.header-tabs{display:flex;gap:0;}
+.tab{
+  padding:0 20px;height:52px;
+  display:flex;align-items:center;
+  font-size:11px;letter-spacing:0.12em;color:var(--text2);
+  cursor:pointer;border-bottom:2px solid transparent;
+  transition:all 0.2s;text-transform:uppercase;
+}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.header-actions{display:flex;align-items:center;gap:12px;}
+.api-status{
+  font-size:10px;letter-spacing:0.1em;color:var(--text2);
+  display:flex;align-items:center;gap:6px;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success);animation:pulse 2s infinite;}
+.status-dot.offline{background:var(--danger);box-shadow:0 0 6px var(--danger);animation:none;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;height:calc(100vh - 52px);}
+
+/* TOOLBAR */
+.toolbar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:10px 32px;
+  display:flex;align-items:center;gap:16px;
+  flex-wrap:wrap;
+}
+.search-wrap{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  padding:8px 14px;
+  border-radius:4px;
+  flex:1;max-width:320px;
+  transition:border-color 0.2s;
+}
+.search-wrap:focus-within{border-color:var(--accent);}
+.search-wrap svg{color:var(--text2);flex-shrink:0;}
+.search-wrap input{
+  background:none;border:none;outline:none;
+  font-family:'Fira Code',monospace;font-size:13px;
+  color:var(--text);width:100%;
+}
+.search-wrap input::placeholder{color:var(--text2);}
+
+.filter-group{display:flex;gap:8px;align-items:center;}
+.filter-label{font-size:10px;letter-spacing:0.1em;color:var(--text2);text-transform:uppercase;}
+select{
+  background:var(--bg);border:1px solid var(--border2);
+  color:var(--text);font-family:'Fira Code',monospace;font-size:12px;
+  padding:7px 10px;border-radius:4px;outline:none;cursor:pointer;
+}
+select:focus{border-color:var(--accent);}
+
+.toolbar-spacer{flex:1;}
+.btn-sm{
+  padding:7px 16px;border-radius:4px;
+  font-family:'Fira Code',monospace;font-size:11px;letter-spacing:0.08em;
+  cursor:pointer;border:1px solid;transition:all 0.15s;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-refresh{background:transparent;border-color:var(--border2);color:var(--text2);}
+.btn-refresh:hover{border-color:var(--accent);color:var(--accent);}
+.btn-new{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700;}
+.btn-new:hover{box-shadow:0 0 16px rgba(0,229,255,0.4);}
+.btn-export{background:transparent;border-color:var(--border2);color:var(--text2);}
+.btn-export:hover{border-color:var(--accent3);color:var(--accent3);}
+
+/* TABLE CONTAINER */
+.table-wrap{
+  flex:1;overflow:auto;
+  scrollbar-width:thin;scrollbar-color:var(--border2) var(--bg);
+}
+.table-wrap::-webkit-scrollbar{width:6px;height:6px;}
+.table-wrap::-webkit-scrollbar-track{background:var(--bg);}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+table{
+  width:100%;border-collapse:collapse;
+  font-size:13px;
+}
+thead{
+  position:sticky;top:0;z-index:10;
+  background:var(--surface2);
+}
+th{
+  padding:12px 20px;text-align:left;
+  font-size:10px;letter-spacing:0.15em;
+  color:var(--text2);text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+  font-weight:500;cursor:pointer;
+  white-space:nowrap;
+  user-select:none;
+  transition:color 0.2s;
+}
+th:hover{color:var(--accent);}
+th.sorted{color:var(--accent);}
+th .sort-arrow{margin-left:4px;opacity:0.5;font-size:9px;}
+th.sorted .sort-arrow{opacity:1;}
+
+tbody tr{
+  border-bottom:1px solid var(--border);
+  transition:background 0.15s;
+  cursor:pointer;
+}
+tbody tr:hover{background:var(--row-hover);}
+tbody tr.selected{background:rgba(0,229,255,0.06);border-left:2px solid var(--accent);}
+tbody tr.editing{background:rgba(0,229,255,0.04);}
+
+td{
+  padding:13px 20px;
+  color:var(--text);
+  vertical-align:middle;
+}
+td.id-cell{color:var(--text2);font-size:12px;}
+td.name-cell{font-weight:500;color:white;}
+
+/* SCORE BADGE */
+.score-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  min-width:80px;
+}
+.score-num{font-size:14px;font-weight:500;min-width:28px;}
+.score-mini-bar{
+  flex:1;height:4px;background:var(--border2);
+  border-radius:2px;overflow:hidden;max-width:60px;
+}
+.score-mini-fill{height:100%;border-radius:2px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+
+/* INLINE EDIT INPUTS */
+td input.inline-input{
+  background:var(--bg);
+  border:1px solid var(--accent);
+  border-radius:3px;
+  padding:5px 8px;
+  font-family:'Fira Code',monospace;
+  font-size:13px;color:var(--text);
+  outline:none;width:100%;
+  box-shadow:0 0 8px rgba(0,229,255,0.2);
+}
+
+/* ACTIONS */
+.action-cell{display:flex;gap:6px;align-items:center;}
+.btn-icon{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--text2);padding:5px 10px;
+  font-family:'Fira Code',monospace;font-size:10px;
+  border-radius:3px;cursor:pointer;transition:all 0.15s;
+  letter-spacing:0.05em;
+}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent);}
+.btn-icon.save{border-color:var(--success);color:var(--success);}
+.btn-icon.save:hover{background:rgba(62,255,176,0.1);}
+.btn-icon.cancel{border-color:var(--border2);color:var(--text2);}
+.btn-icon.delete:hover{border-color:var(--danger);color:var(--danger);}
+
+/* FOOTER BAR */
+.footer{
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  padding:8px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;color:var(--text2);
+}
+.footer-stats{display:flex;gap:24px;}
+.footer-stat{display:flex;gap:6px;}
+.footer-stat span{color:var(--accent);}
+
+/* EMPTY */
+.empty-row td{
+  text-align:center;padding:80px 20px;
+  color:var(--text2);font-size:13px;
+}
+.empty-icon{font-size:32px;display:block;margin-bottom:12px;opacity:0.3;}
+
+/* LOADING ROW */
+.loading-row td{text-align:center;padding:60px;}
+.loader{
+  display:inline-block;width:20px;height:20px;
+  border:2px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin 0.7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MODAL */
+.modal-bg{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(8,12,20,0.85);
+  backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;
+}
+.modal-bg.open{display:flex;}
+.modal{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-top:2px solid var(--accent);
+  width:420px;
+  animation:modalIn 0.25s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(-20px) scale(0.97)}to{opacity:1;transform:none}}
+.modal-header{
+  padding:20px 24px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.modal-title{
+  font-family:'Archivo Black',sans-serif;
+  font-size:14px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);
+}
+.modal-close{
+  background:none;border:none;color:var(--text2);
+  font-size:18px;cursor:pointer;padding:2px 6px;
+  transition:color 0.2s;
+}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:24px;}
+.form-row{margin-bottom:18px;}
+.form-row label{
+  display:block;font-size:10px;letter-spacing:0.15em;
+  color:var(--text2);text-transform:uppercase;margin-bottom:7px;
+}
+.form-row input{
+  width:100%;background:var(--bg);
+  border:1px solid var(--border2);
+  padding:10px 14px;font-family:'Fira Code',monospace;
+  font-size:13px;color:var(--text);outline:none;border-radius:3px;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.form-row input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,255,0.1);}
+.two-up{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.modal-footer{
+  padding:16px 24px;
+  border-top:1px solid var(--border);
+  display:flex;gap:10px;justify-content:flex-end;
+}
+.btn-modal{
+  padding:9px 20px;border-radius:3px;
+  font-family:'Fira Code',monospace;font-size:12px;
+  cursor:pointer;border:1px solid;transition:all 0.15s;letter-spacing:0.05em;
+}
+.btn-modal.cancel{background:transparent;border-color:var(--border2);color:var(--text2);}
+.btn-modal.cancel:hover{border-color:var(--text);color:var(--text);}
+.btn-modal.confirm{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700;}
+.btn-modal.confirm:hover{box-shadow:0 0 16px rgba(0,229,255,0.4);}
+
+/* TOAST */
+.toasts{position:fixed;bottom:24px;right:24px;z-index:9000;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  background:var(--surface2);border:1px solid var(--border2);
+  padding:12px 18px;font-size:12px;letter-spacing:0.03em;
+  display:flex;align-items:center;gap:10px;
+  animation:toastIn 0.3s ease;min-width:260px;
+  border-radius:3px;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.toast.ok{border-left:3px solid var(--success);}
+.toast.err{border-left:3px solid var(--danger);}
+.toast-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.toast.ok .toast-dot{background:var(--success);box-shadow:0 0 6px var(--success);}
+.toast.err .toast-dot{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+
+/* CHART VIEW */
+.chart-view{padding:32px;display:none;flex-direction:column;gap:28px;overflow-y:auto;}
+.chart-view.active{display:flex;}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.chart-box{
+  background:var(--surface);border:1px solid var(--border);
+  padding:24px;border-radius:4px;
+}
+.chart-title{
+  font-family:'Archivo Black',sans-serif;font-size:12px;
+  letter-spacing:2px;color:var(--text2);text-transform:uppercase;
+  margin-bottom:20px;
+}
+.bar-chart{display:flex;flex-direction:column;gap:10px;}
+.bar-row{display:flex;align-items:center;gap:12px;}
+.bar-name{font-size:12px;color:var(--text);min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;height:20px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:2px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;}
+.bar-fill span{font-size:10px;color:rgba(0,0,0,0.8);font-weight:700;}
+
+/* SCATTER */
+.scatter-wrap{position:relative;width:100%;padding-bottom:100%;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.scatter-inner{position:absolute;inset:0;}
+canvas{width:100%;height:100%;}
+
+/* TABLE VIEW toggle */
+.table-view{flex:1;display:flex;flex-direction:column;}
+.table-view.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">CONTACT<span class="logo-slash">/</span>OS</div>
+  <div class="header-tabs">
+    <div class="tab active" onclick="switchTab('table')">Table View</div>
+    <div class="tab" onclick="switchTab('chart')">Analytics</div>
+  </div>
+  <div class="header-actions">
+    <div class="api-status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">connecting...</span>
+    </div>
+  </div>
+</header>
+
+<div class="main" id="main">
+
+  <!-- TABLE VIEW -->
+  <div class="table-view" id="table-view">
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search" placeholder="search contacts..." oninput="applyFilters()"/>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Sort</span>
+        <select id="sort-field" onchange="applyFilters()">
+          <option value="id">ID</option>
+          <option value="name">Name</option>
+          <option value="memory_score">Memory</option>
+          <option value="sleep_score">Sleep</option>
+        </select>
+        <select id="sort-dir" onchange="applyFilters()">
+          <option value="asc">ASC</option>
+          <option value="desc">DESC</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Min Score</span>
+        <select id="min-score" onchange="applyFilters()">
+          <option value="0">All</option>
+          <option value="25">25+</option>
+          <option value="50">50+</option>
+          <option value="75">75+</option>
+        </select>
+      </div>
+      <div class="toolbar-spacer"></div>
+      <button class="btn-sm btn-export" onclick="exportCSV()">↓ CSV</button>
+      <button class="btn-sm btn-refresh" onclick="loadContacts()">↺ Refresh</button>
+      <button class="btn-sm btn-new" onclick="openNewModal()">+ New</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th onclick="setSortField('id')" id="th-id">ID <span class="sort-arrow">↑</span></th>
+            <th onclick="setSortField('name')" id="th-name">Name <span class="sort-arrow"></span></th>
+            <th onclick="setSortField('memory_score')" id="th-memory_score">Memory Score <span class="sort-arrow"></span></th>
+            <th onclick="setSortField('sleep_score')" id="th-sleep_score">Sleep Score <span class="sort-arrow"></span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr class="loading-row"><td colspan="5"><div class="loader"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="footer-stats">
+        <div class="footer-stat">Records: <span id="f-total">0</span></div>
+        <div class="footer-stat">Avg Memory: <span id="f-mem">—</span></div>
+        <div class="footer-stat">Avg Sleep: <span id="f-sleep">—</span></div>
+        <div class="footer-stat">Top Score: <span id="f-top">—</span></div>
+      </div>
+      <div id="f-selected" style="color:var(--text2)"></div>
+    </div>
+  </div>
+
+  <!-- CHART VIEW -->
+  <div class="chart-view" id="chart-view">
+    <div style="font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;">Analytics Overview</div>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <div class="chart-title">Memory Scores</div>
+        <div class="bar-chart" id="mem-bars"></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Sleep Scores</div>
+        <div class="bar-chart" id="sleep-bars"></div>
+      </div>
+      <div class="chart-box" style="grid-column:1/-1">
+        <div class="chart-title">Memory vs Sleep Scatter</div>
+        <div class="scatter-wrap">
+          <div class="scatter-inner">
+            <canvas id="scatter-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NEW / EDIT MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">NEW CONTACT</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modal-id"/>
+      <div class="form-row">
+        <label>Full Name</label>
+        <input type="text" id="modal-name" placeholder="e.g. Ada Lovelace"/>
+      </div>
+      <div class="two-up">
+        <div class="form-row">
+          <label>Memory Score <span style="color:var(--accent2)">(0–100)</span></label>
+          <input type="number" id="modal-memory" placeholder="0" min="0" max="100"/>
+        </div>
+        <div class="form-row">
+          <label>Sleep Score <span style="color:var(--accent2)">(0–100)</span></label>
+          <input type="number" id="modal-sleep" placeholder="0" min="0" max="100"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal confirm" id="modal-confirm" onclick="submitModal()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+const API = 'https://backend-ks6g.onrender.com';
+let contacts = [];
+let filtered = [];
+let editingId = null;
+let modalMode = 'new'; // 'new' | 'edit'
+
+// ── INIT ────────────────────────────────────────────────
+loadContacts();
+
+async function loadContacts() {
+  setBody(`<tr class="loading-row"><td colspan="5"><div class="loader"></div></td></tr>`);
+  try {
+    const r = await fetch(`${API}/contacts`);
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    contacts = d.contacts || [];
+    setStatus(true);
+    applyFilters();
+  } catch {
+    setStatus(false);
+    setBody(`<tr class="empty-row"><td colspan="5"><span class="empty-icon">⚠</span>Cannot reach API at ${API}</td></tr>`);
+  }
+}
+
+// ── FILTER + SORT ────────────────────────────────────────
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const field = document.getElementById('sort-field').value;
+  const dir = document.getElementById('sort-dir').value;
+  const minScore = parseInt(document.getElementById('min-score').value);
+
+  filtered = contacts.filter(c => {
+    const matchQ = c.name.toLowerCase().includes(q) || String(c.id).includes(q);
+    const matchScore = (c.memory_score >= minScore) || (c.sleep_score >= minScore);
+    return matchQ && matchScore;
+  });
+
+  filtered.sort((a, b) => {
+    let va = a[field], vb = b[field];
+    if (typeof va === 'string') va = va.toLowerCase(), vb = vb.toLowerCase();
+    return dir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+  });
+
+  renderTable();
+  updateFooter();
+  if (document.getElementById('chart-view').classList.contains('active')) renderCharts();
+}
+
+function setSortField(f) {
+  const cur = document.getElementById('sort-field').value;
+  const dir = document.getElementById('sort-dir');
+  if (cur === f) dir.value = dir.value === 'asc' ? 'desc' : 'asc';
+  else { document.getElementById('sort-field').value = f; dir.value = 'asc'; }
+  applyFilters();
+  // update header arrows
+  document.querySelectorAll('th[id^=th-]').forEach(th => {
+    th.classList.remove('sorted');
+    th.querySelector('.sort-arrow').textContent = '';
+  });
+  const th = document.getElementById(`th-${f}`);
+  if (th) {
+    th.classList.add('sorted');
+    th.querySelector('.sort-arrow').textContent = dir.value === 'asc' ? '↑' : '↓';
+  }
+}
+
+// ── RENDER TABLE ─────────────────────────────────────────
+function renderTable() {
+  if (!filtered.length) {
+    setBody(`<tr class="empty-row"><td colspan="5"><span class="empty-icon">◌</span>No contacts match your filters</td></tr>`);
+    return;
+  }
+
+  const rows = filtered.map(c => {
+    const isEditing = editingId === c.id;
+    const mc = scoreColor(c.memory_score), sc = scoreColor(c.sleep_score);
+
+    if (isEditing) {
+      return `<tr class="editing" id="row-${c.id}">
+        <td class="id-cell">#${String(c.id).padStart(4,'0')}</td>
+        <td><input class="inline-input" id="ei-name" value="${escHtml(c.name)}" style="width:180px"/></td>
+        <td><input class="inline-input" id="ei-mem" type="number" value="${c.memory_score}" min="0" max="100" style="width:80px"/></td>
+        <td><input class="inline-input" id="ei-sleep" type="number" value="${c.sleep_score}" min="0" max="100" style="width:80px"/></td>
+        <td class="action-cell">
+          <button class="btn-icon save" onclick="saveInline(${c.id})">✓ save</button>
+          <button class="btn-icon cancel" onclick="cancelEdit()">✕</button>
+        </td>
+      </tr>`;
+    }
+
+    return `<tr id="row-${c.id}" onclick="selectRow(${c.id})">
+      <td class="id-cell">#${String(c.id).padStart(4,'0')}</td>
+      <td class="name-cell">${escHtml(c.name)}</td>
+      <td>
+        <div class="score-badge">
+          <span class="score-num" style="color:${mc}">${c.memory_score}</span>
+          <div class="score-mini-bar"><div class="score-mini-fill" style="width:${c.memory_score}%;background:${mc}"></div></div>
+        </div>
+      </td>
+      <td>
+        <div class="score-badge">
+          <span class="score-num" style="color:${sc}">${c.sleep_score}</span>
+          <div class="score-mini-bar"><div class="score-mini-fill" style="width:${c.sleep_score}%;background:${sc}"></div></div>
+        </div>
+      </td>
+      <td class="action-cell" onclick="event.stopPropagation()">
+        <button class="btn-icon" onclick="startInlineEdit(${c.id})">edit</button>
+        <button class="btn-icon delete" onclick="deleteContact(${c.id})">del</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  setBody(rows);
+}
+
+function setBody(html) {
+  document.getElementById('table-body').innerHTML = html;
+}
+
+let selectedId = null;
+function selectRow(id) {
+  if (editingId) return;
+  selectedId = selectedId === id ? null : id;
+  document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
+  if (selectedId) {
+    const row = document.getElementById(`row-${selectedId}`);
+    if (row) row.classList.add('selected');
+  }
+  document.getElementById('f-selected').textContent = selectedId ? `Selected: #${String(selectedId).padStart(4,'0')}` : '';
+}
+
+// ── INLINE EDIT ──────────────────────────────────────────
+function startInlineEdit(id) {
+  editingId = id;
+  renderTable();
+  setTimeout(() => document.getElementById('ei-name')?.focus(), 50);
+}
+
+async function saveInline(id) {
+  const name = document.getElementById('ei-name').value.trim();
+  const memory_score = parseInt(document.getElementById('ei-mem').value);
+  const sleep_score = parseInt(document.getElementById('ei-sleep').value);
+  if (!name || isNaN(memory_score) || isNaN(sleep_score)) { toast('Fill all fields', 'err'); return; }
+  try {
+    const r = await fetch(`${API}/update_contact/${id}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, memory_score, sleep_score})
+    });
+    if (!r.ok) throw new Error();
+    const c = contacts.find(x => x.id === id);
+    if (c) { c.name = name; c.memory_score = memory_score; c.sleep_score = sleep_score; }
+    toast(`Updated ${name}`, 'ok');
+    editingId = null;
+    applyFilters();
+  } catch { toast('Update failed', 'err'); }
+}
+
+function cancelEdit() { editingId = null; renderTable(); }
+
+// ── DELETE ───────────────────────────────────────────────
+async function deleteContact(id) {
+  const c = contacts.find(x => x.id === id);
+  if (!confirm(`Delete "${c?.name}"?`)) return;
+  try {
+    const r = await fetch(`${API}/delete_contact/${id}`, {method:'DELETE'});
+    if (!r.ok) throw new Error();
+    contacts = contacts.filter(x => x.id !== id);
+    toast('Contact deleted', 'ok');
+    applyFilters();
+  } catch { toast('Delete failed', 'err'); }
+}
+
+// ── MODAL (NEW / EDIT) ───────────────────────────────────
+function openNewModal() {
+  modalMode = 'new';
+  document.getElementById('modal-title').textContent = 'NEW CONTACT';
+  document.getElementById('modal-confirm').textContent = 'Create';
+  document.getElementById('modal-id').value = '';
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-memory').value = '';
+  document.getElementById('modal-sleep').value = '';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('modal-name').focus(), 100);
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function submitModal() {
+  const name = document.getElementById('modal-name').value.trim();
+  const memory_score = parseInt(document.getElementById('modal-memory').value);
+  const sleep_score = parseInt(document.getElementById('modal-sleep').value);
+  if (!name || isNaN(memory_score) || isNaN(sleep_score)) { toast('All fields required', 'err'); return; }
+
+  if (modalMode === 'new') {
+    try {
+      const r = await fetch(`${API}/create_contact`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name, memory_score, sleep_score})
+      });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.message); }
+      toast(`Created ${name}`, 'ok');
+      closeModal();
+      await loadContacts();
+    } catch(e) { toast(e.message || 'Create failed', 'err'); }
+  }
+}
+
+// ── ANALYTICS ────────────────────────────────────────────
+function renderCharts() {
+  const top10mem = [...contacts].sort((a,b) => b.memory_score - a.memory_score).slice(0,8);
+  const top10slp = [...contacts].sort((a,b) => b.sleep_score - a.sleep_score).slice(0,8);
+
+  document.getElementById('mem-bars').innerHTML = top10mem.map(c => `
+    <div class="bar-row">
+      <div class="bar-name">${escHtml(c.name)}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${c.memory_score}%;background:${scoreColor(c.memory_score)}">
+          <span>${c.memory_score}</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('sleep-bars').innerHTML = top10slp.map(c => `
+    <div class="bar-row">
+      <div class="bar-name">${escHtml(c.name)}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${c.sleep_score}%;background:${scoreColor(c.sleep_score)}">
+          <span>${c.sleep_score}</span>
+        </div>
+      </div>
+    </div>`).join('');
+
+  drawScatter();
+}
+
+function drawScatter() {
+  const canvas = document.getElementById('scatter-canvas');
+  const wrap = canvas.parentElement.parentElement;
+  const size = wrap.offsetWidth;
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const pad = 40;
+  const w = size - pad*2, h = size - pad*2;
+
+  ctx.clearRect(0,0,size,size);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(30,45,74,0.8)'; ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++) {
+    const x = pad + (w/4)*i, y = pad + (h/4)*i;
+    ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,pad+h);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(pad+w,y);ctx.stroke();
+  }
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(120,144,184,0.8)'; ctx.font = '10px Fira Code'; ctx.textAlign='center';
+  for (let i=0;i<=4;i++) {
+    ctx.fillText(i*25, pad+(w/4)*i, size-8);
+    ctx.textAlign='right';
+    ctx.fillText(100-i*25, pad-6, pad+(h/4)*i+4);
+    ctx.textAlign='center';
+  }
+  ctx.fillStyle='rgba(120,144,184,0.6)';
+  ctx.fillText('Memory Score', size/2, size-24);
+
+  // Points
+  contacts.forEach(c => {
+    const x = pad + (c.memory_score/100)*w;
+    const y = pad + h - (c.sleep_score/100)*h;
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(0,229,255,0.7)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(0,229,255,0.3)';ctx.lineWidth=1;
+    ctx.stroke();
+  });
+}
+
+// ── TABS ─────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='table')||(i===1&&tab==='chart')));
+  document.getElementById('table-view').classList.toggle('hidden', tab==='chart');
+  document.getElementById('chart-view').classList.toggle('active', tab==='chart');
+  if (tab==='chart') renderCharts();
+}
+
+// ── EXPORT ───────────────────────────────────────────────
+function exportCSV() {
+  const rows = [['id','name','memory_score','sleep_score'], ...filtered.map(c=>[c.id,`"${c.name}"`,c.memory_score,c.sleep_score])];
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'contacts.csv'; a.click();
+}
+
+// ── FOOTER ───────────────────────────────────────────────
+function updateFooter() {
+  document.getElementById('f-total').textContent = filtered.length;
+  if (!filtered.length) {
+    document.getElementById('f-mem').textContent = '—';
+    document.getElementById('f-sleep').textContent = '—';
+    document.getElementById('f-top').textContent = '—';
+    return;
+  }
+  const avgM = Math.round(filtered.reduce((s,c)=>s+c.memory_score,0)/filtered.length);
+  const avgS = Math.round(filtered.reduce((s,c)=>s+c.sleep_score,0)/filtered.length);
+  const top = Math.max(...filtered.map(c=>Math.max(c.memory_score,c.sleep_score)));
+  document.getElementById('f-mem').textContent = avgM;
+  document.getElementById('f-sleep').textContent = avgS;
+  document.getElementById('f-top').textContent = top;
+}
+
+// ── HELPERS ──────────────────────────────────────────────
+function scoreColor(v) {
+  if (v >= 80) return '#3effb0';
+  if (v >= 60) return '#00e5ff';
+  if (v >= 40) return '#f5c518';
+  return '#ff3e6b';
+}
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setStatus(ok) {
+  document.getElementById('status-dot').className = 'status-dot' + (ok ? '' : ' offline');
+  document.getElementById('status-text').textContent = ok ? 'api connected' : 'api offline';
+}
+function toast(msg, type='ok') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<div class="toast-dot"></div>${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// ── KEYBOARD ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); cancelEdit(); }
+  if (e.key === 'Enter' && document.getElementById('modal').classList.contains('open')) submitModal();
+  if ((e.ctrlKey||e.metaKey) && e.key==='r') { e.preventDefault(); loadContacts(); }
+});
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+</script>
+</body>
+</html>
