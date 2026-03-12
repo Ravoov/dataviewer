@@ -356,6 +356,58 @@ canvas{width:100%;height:100%;}
 /* TABLE VIEW toggle */
 .table-view{flex:1;display:flex;flex-direction:column;}
 .table-view.hidden{display:none;}
+
+/* PERFORMANCE VIEW */
+.perf-view{padding:32px;display:none;flex-direction:column;gap:24px;overflow-y:auto;}
+.perf-view.active{display:flex;}
+.perf-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.person-select{
+  background:var(--bg);border:1px solid var(--border2);
+  color:var(--text);font-family:'Fira Code',monospace;font-size:13px;
+  padding:9px 14px;border-radius:4px;outline:none;cursor:pointer;
+  min-width:200px;
+}
+.person-select:focus{border-color:var(--accent);}
+.perf-box{
+  background:var(--surface);border:1px solid var(--border);
+  padding:24px;border-radius:4px;
+}
+.perf-title{
+  font-family:'Archivo Black',sans-serif;font-size:12px;
+  letter-spacing:2px;color:var(--text2);text-transform:uppercase;
+  margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;
+}
+.perf-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.perf-stat-card{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:16px;border-radius:4px;text-align:center;
+}
+.perf-stat-val{font-family:'Archivo Black',sans-serif;font-size:28px;line-height:1;margin-bottom:4px;}
+.perf-stat-lbl{font-size:10px;letter-spacing:0.1em;color:var(--text2);text-transform:uppercase;}
+.perf-canvas-wrap{position:relative;width:100%;height:280px;}
+.perf-canvas-wrap canvas{width:100%;height:100%;}
+.no-person{
+  text-align:center;padding:80px 20px;
+  color:var(--text2);font-size:13px;
+}
+.no-person-icon{font-size:32px;display:block;margin-bottom:12px;opacity:0.3;}
+.trend-badge{
+  font-size:11px;padding:3px 10px;border-radius:20px;
+  font-family:'Fira Code',monospace;
+}
+.trend-up{background:rgba(62,255,176,0.15);color:var(--success);}
+.trend-down{background:rgba(255,62,107,0.15);color:var(--danger);}
+.trend-flat{background:rgba(120,144,184,0.15);color:var(--text2);}
+.history-list{display:flex;flex-direction:column;gap:8px;margin-top:16px;max-height:200px;overflow-y:auto;}
+.history-item{
+  display:flex;align-items:center;gap:16px;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:10px 16px;border-radius:4px;font-size:12px;
+}
+.history-date{color:var(--text2);min-width:130px;}
+.history-scores{display:flex;gap:16px;flex:1;}
+.history-score{display:flex;align-items:center;gap:6px;}
+.history-score-lbl{color:var(--text2);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;}
 </style>
 </head>
 <body>
@@ -365,6 +417,7 @@ canvas{width:100%;height:100%;}
   <div class="header-tabs">
     <div class="tab active" onclick="switchTab('table')">Table View</div>
     <div class="tab" onclick="switchTab('chart')">Analytics</div>
+    <div class="tab" onclick="switchTab('performance')">Performance</div>
   </div>
   <div class="header-actions">
     <div class="api-status">
@@ -479,6 +532,28 @@ canvas{width:100%;height:100%;}
     </div>
   </div>
 
+  <!-- PERFORMANCE VIEW -->
+  <div class="perf-view" id="perf-view">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div style="font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:3px;color:var(--text2);text-transform:uppercase;">Performance Over Time</div>
+    </div>
+    <div class="perf-controls">
+      <span class="filter-label">Select Person</span>
+      <select class="person-select" id="person-select" onchange="renderPerformance()">
+        <option value="">— choose a person —</option>
+      </select>
+      <span class="filter-label">Score</span>
+      <select id="perf-score-type" onchange="renderPerformance()" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'Fira Code',monospace;font-size:12px;padding:7px 10px;border-radius:4px;outline:none;cursor:pointer;">
+        <option value="both">Both</option>
+        <option value="memory_score">Memory Only</option>
+        <option value="sleep_score">Sleep Only</option>
+      </select>
+    </div>
+    <div id="perf-content">
+      <div class="no-person"><span class="no-person-icon">◌</span>Select a person to view their performance over time</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- NEW / EDIT MODAL -->
@@ -534,6 +609,7 @@ async function loadContacts() {
     contacts = d.contacts || [];
     setStatus(true);
     applyFilters();
+    populatePersonSelect();
   } catch {
     setStatus(false);
     setBody(`<tr class="empty-row"><td colspan="5"><span class="empty-icon">⚠</span>Cannot reach API at ${API}</td></tr>`);
@@ -840,10 +916,15 @@ function drawScatter(data) {
 
 // ── TABS ─────────────────────────────────────────────────
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='table')||(i===1&&tab==='chart')));
-  document.getElementById('table-view').classList.toggle('hidden', tab==='chart');
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active',
+      (i===0&&tab==='table')||(i===1&&tab==='chart')||(i===2&&tab==='performance'));
+  });
+  document.getElementById('table-view').classList.toggle('hidden', tab!=='table');
   document.getElementById('chart-view').classList.toggle('active', tab==='chart');
+  document.getElementById('perf-view').classList.toggle('active', tab==='performance');
   if (tab==='chart') renderCharts();
+  if (tab==='performance') { populatePersonSelect(); renderPerformance(); }
 }
 
 // ── EXPORT ───────────────────────────────────────────────
@@ -890,6 +971,199 @@ function toast(msg, type='ok') {
   el.innerHTML = `<div class="toast-dot"></div>${msg}`;
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => el.remove(), 3200);
+}
+
+// ── PERFORMANCE OVER TIME ────────────────────────────────
+function populatePersonSelect() {
+  const sel = document.getElementById('person-select');
+  const current = sel.value;
+  const names = [...new Set(contacts.map(c => c.name))].sort();
+  sel.innerHTML = '<option value="">— choose a person —</option>' +
+    names.map(n => `<option value="${escHtml(n)}" ${n===current?'selected':''}>${escHtml(n)}</option>`).join('');
+}
+
+function renderPerformance() {
+  const name = document.getElementById('person-select').value;
+  const scoreType = document.getElementById('perf-score-type').value;
+  const content = document.getElementById('perf-content');
+
+  if (!name) {
+    content.innerHTML = `<div class="no-person"><span class="no-person-icon">◌</span>Select a person to view their performance over time</div>`;
+    return;
+  }
+
+  // Get all entries for this person sorted by date
+  const entries = contacts
+    .filter(c => c.name === name && c.date)
+    .sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  if (!entries.length) {
+    content.innerHTML = `<div class="no-person"><span class="no-person-icon">◌</span>No dated entries found for <strong style="color:var(--text)">${escHtml(name)}</strong></div>`;
+    return;
+  }
+
+  // Stats
+  const avgMem = Math.round(entries.reduce((s,c)=>s+c.memory_score,0)/entries.length);
+  const avgSlp = Math.round(entries.reduce((s,c)=>s+c.sleep_score,0)/entries.length);
+  const bestMem = Math.max(...entries.map(c=>c.memory_score));
+  const bestSlp = Math.max(...entries.map(c=>c.sleep_score));
+  const lastMem = entries[entries.length-1].memory_score;
+  const lastSlp = entries[entries.length-1].sleep_score;
+  const firstMem = entries[0].memory_score;
+  const firstSlp = entries[0].sleep_score;
+  const memTrend = entries.length>1 ? lastMem-firstMem : 0;
+  const slpTrend = entries.length>1 ? lastSlp-firstSlp : 0;
+
+  function trendBadge(v) {
+    if (v > 0) return `<span class="trend-badge trend-up">↑ +${v}</span>`;
+    if (v < 0) return `<span class="trend-badge trend-down">↓ ${v}</span>`;
+    return `<span class="trend-badge trend-flat">→ stable</span>`;
+  }
+
+  content.innerHTML = `
+    <div class="perf-stats">
+      <div class="perf-stat-card">
+        <div class="perf-stat-val" style="color:var(--accent3)">${avgMem}</div>
+        <div class="perf-stat-lbl">Avg Memory</div>
+      </div>
+      <div class="perf-stat-card">
+        <div class="perf-stat-val" style="color:var(--accent)">${avgSlp}</div>
+        <div class="perf-stat-lbl">Avg Sleep</div>
+      </div>
+      <div class="perf-stat-card">
+        <div class="perf-stat-val" style="color:var(--success)">${bestMem}</div>
+        <div class="perf-stat-lbl">Best Memory</div>
+      </div>
+      <div class="perf-stat-card">
+        <div class="perf-stat-val" style="color:var(--success)">${bestSlp}</div>
+        <div class="perf-stat-lbl">Best Sleep</div>
+      </div>
+    </div>
+    <div class="perf-box">
+      <div class="perf-title">
+        Score Over Time — ${escHtml(name)}
+        <div style="display:flex;gap:8px">${trendBadge(memTrend)} ${trendBadge(slpTrend)}</div>
+      </div>
+      <div class="perf-canvas-wrap"><canvas id="perf-canvas"></canvas></div>
+    </div>
+    <div class="perf-box">
+      <div class="perf-title">Session History</div>
+      <div class="history-list">
+        ${[...entries].reverse().map(c => `
+          <div class="history-item">
+            <div class="history-date">${c.date || '—'}</div>
+            <div class="history-scores">
+              <div class="history-score">
+                <span class="history-score-lbl">MEM</span>
+                <span style="color:${scoreColor(c.memory_score)};font-weight:600">${c.memory_score}</span>
+              </div>
+              <div class="history-score">
+                <span class="history-score-lbl">SLEEP</span>
+                <span style="color:${scoreColor(c.sleep_score)};font-weight:600">${c.sleep_score}</span>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  drawPerfChart(entries, scoreType);
+}
+
+function drawPerfChart(entries, scoreType) {
+  const canvas = document.getElementById('perf-canvas');
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  const W = wrap.offsetWidth, H = 280;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const padL=50, padR=20, padT=20, padB=50;
+  const w = W-padL-padR, h = H-padT-padB;
+
+  ctx.clearRect(0,0,W,H);
+
+  if (entries.length < 2) {
+    ctx.fillStyle='rgba(120,144,184,0.5)';
+    ctx.font='12px Fira Code';ctx.textAlign='center';
+    ctx.fillText('Need at least 2 entries to show a trend', W/2, H/2);
+    return;
+  }
+
+  const n = entries.length;
+
+  // Grid lines
+  ctx.strokeStyle='rgba(30,45,74,0.8)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y = padT + (h/4)*i;
+    ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(padL+w,y);ctx.stroke();
+    ctx.fillStyle='rgba(120,144,184,0.7)';ctx.font='10px Fira Code';ctx.textAlign='right';
+    ctx.fillText(100-i*25, padL-6, y+4);
+  }
+
+  // X axis labels (dates)
+  ctx.fillStyle='rgba(120,144,184,0.7)';ctx.font='9px Fira Code';ctx.textAlign='center';
+  entries.forEach((e,i) => {
+    const x = padL + (i/(n-1))*w;
+    const label = e.date ? e.date.substring(5,10) : `#${i+1}`; // MM-DD
+    ctx.fillText(label, x, H-padB+16);
+    // tick
+    ctx.strokeStyle='rgba(30,45,74,0.6)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x,padT+h);ctx.lineTo(x,padT+h+5);ctx.stroke();
+  });
+
+  function drawLine(values, color) {
+    ctx.beginPath();
+    ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';
+    values.forEach((v,i) => {
+      const x = padL + (i/(n-1))*w;
+      const y = padT + h - (v/100)*h;
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // fill under
+    ctx.beginPath();
+    values.forEach((v,i) => {
+      const x = padL + (i/(n-1))*w;
+      const y = padT + h - (v/100)*h;
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.lineTo(padL+(n-1)/(n-1)*w, padT+h);
+    ctx.lineTo(padL, padT+h);
+    ctx.closePath();
+    ctx.fillStyle=color.replace(')', ',0.08)').replace('rgb','rgba').replace('#','rgba(').replace(/rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}),0\.08\)/i, (m,r,g,b)=>`rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},0.08)`);
+    // simpler fill
+    ctx.save();
+    ctx.globalAlpha=0.08;
+    ctx.fillStyle=color;
+    ctx.fill();
+    ctx.restore();
+    // dots
+    values.forEach((v,i) => {
+      const x = padL + (i/(n-1))*w;
+      const y = padT + h - (v/100)*h;
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+      ctx.fillStyle=color;ctx.fill();
+      ctx.strokeStyle='rgba(8,12,20,0.8)';ctx.lineWidth=2;ctx.stroke();
+      // value label
+      ctx.fillStyle=color;ctx.font='10px Fira Code';ctx.textAlign='center';
+      ctx.fillText(v, x, y-10);
+    });
+  }
+
+  const memVals = entries.map(e=>e.memory_score);
+  const slpVals = entries.map(e=>e.sleep_score);
+
+  if (scoreType==='both' || scoreType==='memory_score') drawLine(memVals, '#f5c518');
+  if (scoreType==='both' || scoreType==='sleep_score')  drawLine(slpVals, '#00e5ff');
+
+  // Legend
+  if (scoreType==='both') {
+    ctx.font='10px Fira Code';
+    ctx.fillStyle='#f5c518';ctx.fillRect(padL,8,12,8);
+    ctx.fillStyle='rgba(200,216,240,0.8)';ctx.textAlign='left';ctx.fillText('Memory',padL+16,16);
+    ctx.fillStyle='#00e5ff';ctx.fillRect(padL+80,8,12,8);
+    ctx.fillStyle='rgba(200,216,240,0.8)';ctx.fillText('Sleep',padL+96,16);
+  }
 }
 
 // ── KEYBOARD ─────────────────────────────────────────────
