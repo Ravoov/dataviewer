@@ -133,6 +133,8 @@ select:focus{border-color:var(--accent);}
 .btn-new:hover{box-shadow:0 0 16px rgba(0,229,255,0.4);}
 .btn-export{background:transparent;border-color:var(--border2);color:var(--text2);}
 .btn-export:hover{border-color:var(--accent3);color:var(--accent3);}
+.btn-import{background:transparent;border-color:var(--border2);color:var(--text2);}
+.btn-import:hover{border-color:var(--accent2);color:var(--accent2);}
 
 /* TABLE CONTAINER */
 .table-wrap{
@@ -311,6 +313,97 @@ td input.inline-input{
 .btn-modal.cancel:hover{border-color:var(--text);color:var(--text);}
 .btn-modal.confirm{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:700;}
 .btn-modal.confirm:hover{box-shadow:0 0 16px rgba(0,229,255,0.4);}
+.btn-modal.confirm-orange{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:700;}
+.btn-modal.confirm-orange:hover{box-shadow:0 0 16px rgba(255,107,53,0.4);}
+
+/* IMPORT MODAL */
+.import-modal{width:560px;}
+.import-modal .modal-title{color:var(--accent2);}
+.import-modal .modal-header{border-top:2px solid var(--accent2);border-bottom:1px solid var(--border);margin-top:-1px;}
+.import-modal{border-top:2px solid var(--accent2);}
+
+/* DROP ZONE */
+.drop-zone{
+  border:2px dashed var(--border2);
+  border-radius:6px;
+  padding:36px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.2s;
+  position:relative;
+  background:var(--bg);
+}
+.drop-zone:hover,.drop-zone.dragover{
+  border-color:var(--accent2);
+  background:rgba(255,107,53,0.04);
+  box-shadow:0 0 20px rgba(255,107,53,0.1);
+}
+.drop-zone input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.drop-icon{font-size:28px;display:block;margin-bottom:10px;opacity:0.5;}
+.drop-label{font-size:12px;color:var(--text2);line-height:1.7;}
+.drop-label strong{color:var(--accent2);}
+.drop-hint{font-size:10px;color:var(--text2);margin-top:6px;letter-spacing:0.08em;}
+
+/* IMPORT PREVIEW */
+.import-preview{margin-top:18px;display:none;}
+.import-preview.visible{display:block;}
+.preview-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.preview-title{font-size:10px;letter-spacing:0.15em;color:var(--text2);text-transform:uppercase;}
+.preview-count{font-size:11px;color:var(--accent2);}
+.preview-table-wrap{
+  max-height:200px;overflow-y:auto;
+  border:1px solid var(--border);border-radius:4px;
+  scrollbar-width:thin;scrollbar-color:var(--border2) var(--bg);
+}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;}
+.preview-table th{
+  background:var(--surface2);padding:8px 12px;
+  font-size:9px;letter-spacing:0.15em;color:var(--text2);
+  text-transform:uppercase;border-bottom:1px solid var(--border);
+  text-align:left;font-weight:500;cursor:default;
+}
+.preview-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);}
+.preview-table tr:last-child td{border-bottom:none;}
+.preview-table tr.row-ok td:first-child::before{content:'✓ ';color:var(--success);}
+.preview-table tr.row-err td{color:var(--danger);opacity:0.7;}
+.preview-table tr.row-err td:first-child::before{content:'✕ ';color:var(--danger);}
+
+/* Import options */
+.import-options{
+  display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;
+}
+.import-opt{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--text2);cursor:pointer;
+}
+.import-opt input[type=radio]{accent-color:var(--accent2);cursor:pointer;}
+.import-opt input[type=checkbox]{accent-color:var(--accent2);cursor:pointer;}
+
+.import-note{
+  font-size:10px;color:var(--text2);line-height:1.6;
+  background:var(--surface2);border:1px solid var(--border);
+  padding:10px 14px;border-radius:4px;margin-top:14px;
+}
+.import-note code{color:var(--accent2);background:rgba(255,107,53,0.1);padding:1px 5px;border-radius:2px;}
+
+/* IMPORT PROGRESS */
+.import-progress{margin-top:16px;display:none;}
+.import-progress.visible{display:block;}
+.progress-bar-wrap{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:4px;overflow:hidden;height:6px;margin-bottom:10px;
+}
+.progress-bar-fill{
+  height:100%;background:var(--accent2);
+  transition:width 0.3s ease;border-radius:4px;
+  box-shadow:0 0 8px rgba(255,107,53,0.5);
+}
+.progress-label{font-size:11px;color:var(--text2);text-align:center;}
 
 /* TOAST */
 .toasts{position:fixed;bottom:24px;right:24px;z-index:9000;display:flex;flex-direction:column;gap:8px;}
@@ -324,9 +417,11 @@ td input.inline-input{
 @keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
 .toast.ok{border-left:3px solid var(--success);}
 .toast.err{border-left:3px solid var(--danger);}
+.toast.info{border-left:3px solid var(--accent2);}
 .toast-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .toast.ok .toast-dot{background:var(--success);box-shadow:0 0 6px var(--success);}
 .toast.err .toast-dot{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+.toast.info .toast-dot{background:var(--accent2);box-shadow:0 0 6px var(--accent2);}
 
 /* CHART VIEW */
 .chart-view{padding:32px;display:none;flex-direction:column;gap:28px;overflow-y:auto;}
@@ -459,7 +554,8 @@ canvas{width:100%;height:100%;}
         <button class="btn-sm btn-refresh" onclick="clearDateFilter()" style="font-size:10px;padding:5px 10px;">✕ Clear</button>
       </div>
       <div class="toolbar-spacer"></div>
-      <button class="btn-sm btn-export" onclick="exportCSV()">↓ CSV</button>
+      <button class="btn-sm btn-import" onclick="openImportModal()">↑ Import CSV</button>
+      <button class="btn-sm btn-export" onclick="exportCSV()">↓ Export CSV</button>
       <button class="btn-sm btn-refresh" onclick="loadContacts()">↺ Refresh</button>
       <button class="btn-sm btn-new" onclick="openNewModal()">+ New</button>
     </div>
@@ -587,6 +683,81 @@ canvas{width:100%;height:100%;}
   </div>
 </div>
 
+<!-- IMPORT CSV MODAL -->
+<div class="modal-bg" id="import-modal">
+  <div class="modal import-modal">
+    <div class="modal-header" style="border-top:none;">
+      <div class="modal-title" style="color:var(--accent2)">↑ IMPORT CSV</div>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding-bottom:0;">
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="csv-file-input" accept=".csv,text/csv" onchange="handleFileSelect(event)"/>
+        <span class="drop-icon">⬆</span>
+        <div class="drop-label">
+          <strong>Drop a CSV file here</strong> or click to browse
+        </div>
+        <div class="drop-hint">Accepted format: .csv</div>
+      </div>
+
+      <!-- Format hint -->
+      <div class="import-note">
+        Expected columns: <code>name</code>, <code>memory_score</code>, <code>sleep_score</code>. 
+        Optional: <code>date</code> (YYYY-MM-DD). Column order doesn't matter. 
+        First row must be a header row.
+      </div>
+
+      <!-- Import mode -->
+      <div class="import-options" style="margin-top:16px;">
+        <span class="filter-label" style="align-self:center;">Mode:</span>
+        <label class="import-opt">
+          <input type="radio" name="import-mode" value="append" checked/> Append to existing
+        </label>
+        <label class="import-opt">
+          <input type="radio" name="import-mode" value="skip"/> Skip duplicates (by name)
+        </label>
+      </div>
+
+      <!-- Preview -->
+      <div class="import-preview" id="import-preview">
+        <div class="preview-header">
+          <span class="preview-title">Preview</span>
+          <span class="preview-count" id="preview-count"></span>
+        </div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Memory</th>
+                <th>Sleep</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="preview-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="import-progress" id="import-progress">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progress-bar-fill" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="progress-label">Importing...</div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="closeImportModal()">Cancel</button>
+      <button class="btn-modal confirm-orange" id="import-confirm-btn" onclick="runImport()" disabled style="opacity:0.4;cursor:not-allowed;">Import</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOASTS -->
 <div class="toasts" id="toasts"></div>
 
@@ -595,7 +766,10 @@ const API = 'https://backend-ks6g.onrender.com';
 let contacts = [];
 let filtered = [];
 let editingId = null;
-let modalMode = 'new'; // 'new' | 'edit'
+let modalMode = 'new';
+
+// Import state
+let importRows = []; // parsed + validated rows ready to import
 
 // ── INIT ────────────────────────────────────────────────
 loadContacts();
@@ -655,7 +829,6 @@ function setSortField(f) {
   if (cur === f) dir.value = dir.value === 'asc' ? 'desc' : 'asc';
   else { document.getElementById('sort-field').value = f; dir.value = 'asc'; }
   applyFilters();
-  // update header arrows
   document.querySelectorAll('th[id^=th-]').forEach(th => {
     th.classList.remove('sorted');
     th.querySelector('.sort-arrow').textContent = '';
@@ -776,7 +949,7 @@ async function deleteContact(id) {
   } catch { toast('Delete failed', 'err'); }
 }
 
-// ── MODAL (NEW / EDIT) ───────────────────────────────────
+// ── MODAL (NEW) ──────────────────────────────────────────
 function openNewModal() {
   modalMode = 'new';
   document.getElementById('modal-title').textContent = 'NEW CONTACT';
@@ -810,6 +983,215 @@ async function submitModal() {
       await loadContacts();
     } catch(e) { toast(e.message || 'Create failed', 'err'); }
   }
+}
+
+// ── IMPORT CSV ───────────────────────────────────────────
+function openImportModal() {
+  // Reset state
+  importRows = [];
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('import-preview').classList.remove('visible');
+  document.getElementById('import-progress').classList.remove('visible');
+  document.getElementById('preview-body').innerHTML = '';
+  document.getElementById('preview-count').textContent = '';
+  setImportConfirmEnabled(false);
+  document.getElementById('import-modal').classList.add('open');
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').classList.remove('open');
+}
+
+function setImportConfirmEnabled(enabled) {
+  const btn = document.getElementById('import-confirm-btn');
+  btn.disabled = !enabled;
+  btn.style.opacity = enabled ? '1' : '0.4';
+  btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+}
+
+// Drag-and-drop on drop zone
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processCSVFile(file);
+});
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processCSVFile(file);
+}
+
+function processCSVFile(file) {
+  if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+    toast('Please select a .csv file', 'err');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => parseAndPreviewCSV(e.target.result);
+  reader.onerror = () => toast('Failed to read file', 'err');
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+  // Handles quoted fields with commas
+  const result = [];
+  let cur = '', inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuote && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuote = !inQuote;
+    } else if (ch === ',' && !inQuote) {
+      result.push(cur.trim()); cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function parseAndPreviewCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
+  if (lines.length < 2) { toast('CSV must have a header row and at least one data row', 'err'); return; }
+
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9_]/g,''));
+
+  // Map known column names (flexible)
+  const colIdx = {
+    name:         headers.findIndex(h => ['name','full_name','fullname','contact','contact_name'].includes(h)),
+    memory_score: headers.findIndex(h => ['memory_score','memory','mem','mem_score'].includes(h)),
+    sleep_score:  headers.findIndex(h => ['sleep_score','sleep','slp','slp_score'].includes(h)),
+    date:         headers.findIndex(h => ['date','session_date','created_at','timestamp'].includes(h)),
+  };
+
+  if (colIdx.name === -1 || colIdx.memory_score === -1 || colIdx.sleep_score === -1) {
+    toast('CSV missing required columns: name, memory_score, sleep_score', 'err');
+    return;
+  }
+
+  importRows = [];
+  const existingNames = new Set(contacts.map(c => c.name.toLowerCase().trim()));
+  const previewRows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]);
+    const name = (cols[colIdx.name] || '').trim();
+    const memRaw = cols[colIdx.memory_score];
+    const slpRaw = cols[colIdx.sleep_score];
+    const dateRaw = colIdx.date >= 0 ? (cols[colIdx.date] || '').trim() : '';
+
+    const mem = parseInt(memRaw);
+    const slp = parseInt(slpRaw);
+
+    const valid = name.length > 0 && !isNaN(mem) && mem >= 0 && mem <= 100
+                                   && !isNaN(slp) && slp >= 0 && slp <= 100;
+
+    const isDuplicate = existingNames.has(name.toLowerCase());
+
+    previewRows.push({ name, mem, slp, date: dateRaw, valid, isDuplicate });
+    if (valid) importRows.push({ name, memory_score: mem, sleep_score: slp, date: dateRaw || null });
+  }
+
+  const validCount = previewRows.filter(r => r.valid).length;
+  const errCount = previewRows.filter(r => !r.valid).length;
+  const dupCount = previewRows.filter(r => r.valid && r.isDuplicate).length;
+
+  let countText = `${validCount} valid`;
+  if (errCount) countText += `, ${errCount} invalid`;
+  if (dupCount) countText += `, ${dupCount} duplicate${dupCount>1?'s':''}`;
+  document.getElementById('preview-count').textContent = countText;
+
+  const tbody = document.getElementById('preview-body');
+  tbody.innerHTML = previewRows.slice(0, 50).map(r => {
+    if (!r.valid) {
+      return `<tr class="row-err">
+        <td>${escHtml(r.name||'(empty)')}</td>
+        <td>${escHtml(String(r.mem??r.memRaw??'?'))}</td>
+        <td>${escHtml(String(r.slp??r.slpRaw??'?'))}</td>
+        <td>${escHtml(r.date||'—')}</td>
+        <td style="color:var(--danger);font-size:10px">invalid</td>
+      </tr>`;
+    }
+    const dupLabel = r.isDuplicate ? `<span style="color:var(--accent2);font-size:10px">duplicate</span>` : `<span style="color:var(--success);font-size:10px">ok</span>`;
+    return `<tr class="row-ok">
+      <td>${escHtml(r.name)}</td>
+      <td style="color:${scoreColor(r.mem)}">${r.mem}</td>
+      <td style="color:${scoreColor(r.slp)}">${r.slp}</td>
+      <td style="color:var(--text2)">${r.date||'—'}</td>
+      <td>${dupLabel}</td>
+    </tr>`;
+  }).join('');
+
+  if (previewRows.length > 50) {
+    tbody.innerHTML += `<tr><td colspan="5" style="text-align:center;color:var(--text2);font-size:11px;padding:10px;">... and ${previewRows.length - 50} more rows</td></tr>`;
+  }
+
+  document.getElementById('import-preview').classList.add('visible');
+  setImportConfirmEnabled(validCount > 0);
+}
+
+async function runImport() {
+  if (!importRows.length) return;
+
+  const mode = document.querySelector('input[name="import-mode"]:checked').value;
+  const existingNames = new Set(contacts.map(c => c.name.toLowerCase().trim()));
+
+  let toImport = importRows;
+  if (mode === 'skip') {
+    toImport = importRows.filter(r => !existingNames.has(r.name.toLowerCase().trim()));
+  }
+
+  if (!toImport.length) {
+    toast('No new contacts to import (all duplicates skipped)', 'info');
+    return;
+  }
+
+  // Disable button, show progress
+  setImportConfirmEnabled(false);
+  const progressWrap = document.getElementById('import-progress');
+  const progressBar = document.getElementById('progress-bar-fill');
+  const progressLabel = document.getElementById('progress-label');
+  progressWrap.classList.add('visible');
+
+  let succeeded = 0, failed = 0;
+
+  for (let i = 0; i < toImport.length; i++) {
+    const row = toImport[i];
+    progressLabel.textContent = `Importing ${i + 1} / ${toImport.length}...`;
+    progressBar.style.width = `${Math.round(((i) / toImport.length) * 100)}%`;
+
+    try {
+      const body = { name: row.name, memory_score: row.memory_score, sleep_score: row.sleep_score };
+      if (row.date) body.date = row.date;
+      const r = await fetch(`${API}/create_contact`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error();
+      succeeded++;
+    } catch {
+      failed++;
+    }
+  }
+
+  progressBar.style.width = '100%';
+  progressLabel.textContent = `Done! ${succeeded} imported${failed ? `, ${failed} failed` : ''}.`;
+
+  setTimeout(async () => {
+    closeImportModal();
+    await loadContacts();
+    if (failed === 0) {
+      toast(`Imported ${succeeded} contact${succeeded !== 1 ? 's' : ''}`, 'ok');
+    } else {
+      toast(`${succeeded} imported, ${failed} failed`, failed > 0 && succeeded === 0 ? 'err' : 'info');
+    }
+  }, 800);
 }
 
 // ── ANALYTICS ────────────────────────────────────────────
@@ -869,7 +1251,6 @@ function drawScatter(data) {
 
   ctx.clearRect(0,0,size,size);
 
-  // Grid
   ctx.strokeStyle = 'rgba(30,45,74,0.8)'; ctx.lineWidth = 1;
   for (let i=0;i<=4;i++) {
     const x = pad + (w/4)*i, y = pad + (h/4)*i;
@@ -877,7 +1258,6 @@ function drawScatter(data) {
     ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(pad+w,y);ctx.stroke();
   }
 
-  // Axis labels
   ctx.fillStyle = 'rgba(120,144,184,0.8)'; ctx.font = '10px Fira Code'; ctx.textAlign='center';
   for (let i=0;i<=4;i++) {
     ctx.fillText(i*25, pad+(w/4)*i, size-8);
@@ -895,7 +1275,6 @@ function drawScatter(data) {
     return;
   }
 
-  // Points with name tooltip on hover
   data.forEach(c => {
     const x = pad + (c.memory_score/100)*w;
     const y = pad + h - (c.sleep_score/100)*h;
@@ -905,7 +1284,6 @@ function drawScatter(data) {
     ctx.fill();
     ctx.strokeStyle='rgba(0,229,255,0.3)';ctx.lineWidth=1;
     ctx.stroke();
-    // name label for filtered results (if fewer than 10)
     if (data.length <= 10) {
       ctx.fillStyle='rgba(200,216,240,0.8)';
       ctx.font='10px Fira Code'; ctx.textAlign='center';
@@ -992,7 +1370,6 @@ function renderPerformance() {
     return;
   }
 
-  // Get all entries for this person sorted by date
   const entries = contacts
     .filter(c => c.name === name && c.date)
     .sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -1002,7 +1379,6 @@ function renderPerformance() {
     return;
   }
 
-  // Stats
   const avgMem = Math.round(entries.reduce((s,c)=>s+c.memory_score,0)/entries.length);
   const avgSlp = Math.round(entries.reduce((s,c)=>s+c.sleep_score,0)/entries.length);
   const bestMem = Math.max(...entries.map(c=>c.memory_score));
@@ -1091,7 +1467,6 @@ function drawPerfChart(entries, scoreType) {
 
   const n = entries.length;
 
-  // Grid lines
   ctx.strokeStyle='rgba(30,45,74,0.8)';ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const y = padT + (h/4)*i;
@@ -1100,13 +1475,11 @@ function drawPerfChart(entries, scoreType) {
     ctx.fillText(100-i*25, padL-6, y+4);
   }
 
-  // X axis labels (dates)
   ctx.fillStyle='rgba(120,144,184,0.7)';ctx.font='9px Fira Code';ctx.textAlign='center';
   entries.forEach((e,i) => {
     const x = padL + (i/(n-1))*w;
-    const label = e.date ? e.date.substring(5,10) : `#${i+1}`; // MM-DD
+    const label = e.date ? e.date.substring(5,10) : `#${i+1}`;
     ctx.fillText(label, x, H-padB+16);
-    // tick
     ctx.strokeStyle='rgba(30,45,74,0.6)';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(x,padT+h);ctx.lineTo(x,padT+h+5);ctx.stroke();
   });
@@ -1120,7 +1493,9 @@ function drawPerfChart(entries, scoreType) {
       i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
     });
     ctx.stroke();
-    // fill under
+    ctx.save();
+    ctx.globalAlpha=0.08;
+    ctx.fillStyle=color;
     ctx.beginPath();
     values.forEach((v,i) => {
       const x = padL + (i/(n-1))*w;
@@ -1130,21 +1505,14 @@ function drawPerfChart(entries, scoreType) {
     ctx.lineTo(padL+(n-1)/(n-1)*w, padT+h);
     ctx.lineTo(padL, padT+h);
     ctx.closePath();
-    ctx.fillStyle=color.replace(')', ',0.08)').replace('rgb','rgba').replace('#','rgba(').replace(/rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}),0\.08\)/i, (m,r,g,b)=>`rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},0.08)`);
-    // simpler fill
-    ctx.save();
-    ctx.globalAlpha=0.08;
-    ctx.fillStyle=color;
     ctx.fill();
     ctx.restore();
-    // dots
     values.forEach((v,i) => {
       const x = padL + (i/(n-1))*w;
       const y = padT + h - (v/100)*h;
       ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
       ctx.fillStyle=color;ctx.fill();
       ctx.strokeStyle='rgba(8,12,20,0.8)';ctx.lineWidth=2;ctx.stroke();
-      // value label
       ctx.fillStyle=color;ctx.font='10px Fira Code';ctx.textAlign='center';
       ctx.fillText(v, x, y-10);
     });
@@ -1156,7 +1524,6 @@ function drawPerfChart(entries, scoreType) {
   if (scoreType==='both' || scoreType==='memory_score') drawLine(memVals, '#f5c518');
   if (scoreType==='both' || scoreType==='sleep_score')  drawLine(slpVals, '#00e5ff');
 
-  // Legend
   if (scoreType==='both') {
     ctx.font='10px Fira Code';
     ctx.fillStyle='#f5c518';ctx.fillRect(padL,8,12,8);
@@ -1168,11 +1535,12 @@ function drawPerfChart(entries, scoreType) {
 
 // ── KEYBOARD ─────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); cancelEdit(); }
+  if (e.key === 'Escape') { closeModal(); closeImportModal(); cancelEdit(); }
   if (e.key === 'Enter' && document.getElementById('modal').classList.contains('open')) submitModal();
   if ((e.ctrlKey||e.metaKey) && e.key==='r') { e.preventDefault(); loadContacts(); }
 });
 document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+document.getElementById('import-modal').addEventListener('click', e => { if (e.target === document.getElementById('import-modal')) closeImportModal(); });
 </script>
 </body>
 </html>
